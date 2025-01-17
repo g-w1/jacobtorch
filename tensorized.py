@@ -218,7 +218,7 @@ class Square(Node):
 class Layer:
     def __init__(self, in_features, out_features, activate=None):
         self.weight = Matrix(np.random.randn(out_features, in_features))
-        self.bias = Matrix(np.random.randn(out_features, 1))
+        self.bias = Matrix(np.zeros((out_features, 1)))
         self.activate = activate
 
     def __call__(self, x):
@@ -232,7 +232,10 @@ class Layer:
         return [self.weight, self.bias]
 
 
-net = [Layer(1, 100, activate=Sigmoid), Layer(100, 100, activate=ReLU), Layer(100, 1)]
+net = [
+    Layer(1, 10, activate=ReLU),
+    Layer(10, 1),
+]
 params = []
 for layer in net:
     params += layer.params()
@@ -246,14 +249,14 @@ def run_net(x):
 
 
 def ground_truth(x):
-    return x**3 * np.sin(2 * x)
+    return np.sin(x)
 
 
 def get_loss(yhat, y):
     return Square(yhat - Matrix(np.array([[y]])))
 
 
-for iter in range(1001):
+for iter in range(5001):
     n_samps = 200
     samps = np.linspace(-np.pi, np.pi, n_samps)
     yhats = [run_net(x) for x in samps]
@@ -267,8 +270,8 @@ for iter in range(1001):
     if iter % 10 == 0:
         print("iter", iter, "loss", l.val)
     for param in params:
-        param.val -= 0.0001 * param.grad
-        param.grad = 0
+        param.val -= 0.001 * param.grad
+        param.grad = None
     if iter % 100 == 0:
         plt.plot([y.val[0][0] for y in yhats], label="predicted")
         plt.plot(ys, label="ground truth")
